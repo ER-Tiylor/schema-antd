@@ -1,0 +1,62 @@
+{
+  "name": "@tianyr/schema-antd",
+  "version": "0.1.0",
+  "description": "基于 antd v5 的 Schema 驱动表单、字段渲染与两种可编辑表格",
+  "keywords": [
+    "antd",
+    "react",
+    "schema",
+    "form",
+    "editable-table"
+  ],
+  "homepage": "https://github.com/ER-Tiylor/schema-antd#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ER-Tiylor/schema-antd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ER-Tiylor/schema-antd/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/fix-esm-ext.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run typecheck && npm run build",
+    "publish:public": "node scripts/publish.mjs public",
+    "publish:inner": "node scripts/publish.mjs inner"
+  },
+  "peerDependencies": {
+    "@ant-design/icons": "^5.2.0",
+    "antd": "^5.20.0",
+    "dayjs": "^1.11.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@ant-design/icons": "^5.2.6",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "antd": "5.20.0",
+    "dayjs": "^1.11.10",
+    "typescript": "^5.2.2"
+  }
+}

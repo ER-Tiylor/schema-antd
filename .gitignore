@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.tgz
+
+# 内网发布配置：地址与包名都写在这里，永不提交
+.publish.env
+.npmrc.local
