@@ -23,7 +23,7 @@ import {
   Upload,
 } from 'antd';
 
-import type { FieldType } from './types';
+import type { AnyFormFieldSchema, FieldType } from './types';
 
 export interface FieldDefinition<T = unknown> {
   component: ComponentType<any>;
@@ -33,6 +33,11 @@ export interface FieldDefinition<T = unknown> {
   getValueFromEvent?: (...args: any[]) => T;
   /** 只读展示；返回 undefined 表示退到内置格式化 */
   renderRead?: (value: T, props: Record<string, unknown>) => ReactNode;
+  /**
+   * 渲染前归一化字段定义：把类型专有属性编译成引擎认识的 shape。
+   * 必须是纯函数，调用方会按 schema 对象缓存结果（不可每次返回新对象）。
+   */
+  normalize?: (schema: AnyFormFieldSchema) => AnyFormFieldSchema;
 }
 
 const registry = new Map<string, FieldDefinition>();

@@ -5,7 +5,8 @@
  * 编辑态与只读态必须共用这一份求值逻辑，两种模式只在
  * 属性下发、校验、事件与写入行为上不同，派生结果本身一致。
  */
-import type { Derived, FieldSchema, FormFieldSchema, ReadContext, Rule } from '../types';
+import { getFieldDefinition } from '../registry';
+import type { AnyFormFieldSchema, Derived, FieldSchema, FormFieldSchema, ReadContext, Rule } from '../types';
 import { getNestedValue } from './namePath';
 
 export interface DerivedFieldState {
@@ -36,6 +37,26 @@ function withRequired(rules: Rule[], required: boolean, label?: unknown): Rule[]
     return [{ required: true, message: `请填写${labelText}` }, ...rules];
   }
   return rules.filter((rule) => !isRequiredRule(rule));
+}
+
+/**
+ * 字段类型的归一化结果缓存。
+ *
+ * `normalize` 会生成新对象，如果不缓存，每次渲染都换一份 schema，
+ * 下游 memo 与 effect 会全部失效——那正是 BizSelect 设计文档 §5.3 要避免的情况。
+ * schema 多为模块级常量，一份 schema 只会归一化一次。
+ */
+const normalizedCache = new WeakMap<object, AnyFormFieldSchema>();
+
+/** 按注册的字段类型归一化字段定义；没有 normalize 的类型原样返回 */
+export function normalizeFieldSchema<T extends AnyFormFieldSchema>(schema: T): T {
+  const normalize = getFieldDefinition(schema.type)?.normalize;
+  if (!normalize) return schema;
+  const cached = normalizedCache.get(schema);
+  if (cached) return cached as T;
+  const next = normalize(schema) as T;
+  normalizedCache.set(schema, next);
+  return next;
 }
 
 /**

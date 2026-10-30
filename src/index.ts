@@ -11,8 +11,8 @@ export { SchemaFormField } from './form/SchemaFormField';
 export type { SchemaFormFieldProps } from './form/SchemaFormField';
 export { FormRuntimeHost, FormRuntimeHostProvider, useFormRuntimeHost } from './form/FormRuntimeHost';
 export { namePathKey, normalizeNamePath, getNestedValue } from './form/namePath';
-// 副作用导入：注册 AppSelect 字段类型，保证只导入本包时即可用
-export * from './app-select';
+// BizSelect 不带副作用：字段类型需使用方调 registerBizSelectField() 注册
+export * from './biz-select';
 export * from './editable-table';
 export * from './full-editable-table';
 export { mergeRowValues } from './rowMerge';

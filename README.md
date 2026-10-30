@@ -1,11 +1,12 @@
 # schema-antd
 
-基于 antd v5 的 Schema 驱动表单与可编辑表格。一份扁平的字段配置，同时用于普通表单、
+基于 antd v5 的 Schema 驱动表单、可编辑表格与业务下拉。一份扁平的字段配置，同时用于普通表单、
 单活动行编辑表格和全行常驻编辑表格，字段的显隐、禁用、校验、选项和联动都由配置描述。
 
 - **不内置 antd**：`antd` / `react` 全部是 peer 依赖，产物只有 ESM 与类型声明
 - **一份绑定层**：普通表单和两种表格的行复用同一个字段绑定，联动语义完全一致
 - **可编辑列三态**：`true` 编辑、`'read'` 只读但跟随本行 Form（能看到联动带出的值）、`false` 直接读行记录
+- **业务下拉**：`BizSelect` 把候选来源、编码回显、级联接入收进一个组件，值默认存编码
 
 ## 安装
 
@@ -117,26 +118,53 @@ const columns: EditableColumn<OrderRow>[] = [
 />
 ```
 
-## AppSelect
+## BizSelect
 
-带搜索与回显分离的远程选择器。候选源在应用启动时注册一次：
+业务下拉：候选从哪来、只有一个编码时名称怎么还原、切换上级后旧候选怎么办。
+值默认是标量编码（`valueMode="object"` 可存对象），字段类型由使用方显式注册。
 
 ```ts
-import { registerAppSelectSource } from '@tianyr/schema-antd'
+import { defineSelectSources, loaded, remote, staticList } from '@tianyr/schema-antd'
 
-registerAppSelectSource('product', {
-  kind: 'remote',
-  search: (keyword, params, signal) => api.searchProduct(keyword, params, signal),
-  resolve: (id, params, signal) => api.getProduct(id, params, signal),
-  requiredParams: ['companyId'],   // 缺任一参数就不发请求
+defineSelectSources({
+  province: staticList(PROVINCES),        // 前端常量，不发请求
+  currency: loaded(api.listCurrency),     // 一次拉全量，之后前端过滤
+  material: remote({                      // 关键词交给后端，另配编码精确回显
+    search: (keyword, params, signal) => api.pageMaterial({ keyword, ...params }, signal),
+    resolve: (code, params, signal) => api.getMaterial(code, params, signal),
+    requiredParams: ['warehouseCode'],    // 缺参数不发请求，避免查到别家数据
+  }),
 })
 ```
 
 ```tsx
-{ type: 'AppSelect', name: 'productId', label: '物料', props: { source: 'product', queryParams: { companyId } } }
+// 独立使用：受控，value / onChange 必配
+<BizSelect source="currency" value={currency} onChange={setCurrency} />
+
+// 只读：同一套名称解析，不挂 Select
+<BizSelectDisplay source="material" params={{ warehouseCode }} value={materialCode} />
 ```
 
-页面局部接口不必注册，直接把源对象传给 `dataSource`。
+在 schema 里用，级联一行配完（先调一次 `registerBizSelectField()` 注册类型）：
+
+```tsx
+{
+  type: 'BizSelect',
+  name: 'materialCode',
+  label: '物料',
+  source: 'material',
+  paramsFrom: { warehouseCode: 'warehouseCode' },   // 参数名 ← 字段名
+  blockedText: '请先选择仓库',
+}
+```
+
+约定：
+
+- 行为由源的能力推导：`options` 前端常量、`load` 一次拉全量后前端过滤、`search` 后端搜索，三者可组合。
+- `resolve(code)` 专用于按编码精确回显，不要用模糊搜索冒充。
+- `requiredParams` 不齐时进入 `blocked`：候选为空、不发请求。
+- `invalidateSelectSource(name)` 让已挂载的实例重新取数；`useCandidates` 可把同一份候选给树、弹窗复用。
+- 内联源要跨实例共享缓存，就传导入的函数或显式 `cacheKey`；内联箭头每次渲染都换键，缓存命中不了。
 
 ## 其他导出
 
@@ -153,6 +181,8 @@ registerAppSelectSource('product', {
 - 用 `import.meta.env.DEV` 判断开发态以输出告警，非 Vite 环境（如 SSR）下恒为 `false`，
   不影响功能，只是少几条开发提示。
 - `virtual` 不开放：虚拟滚动会卸载离屏行，全行常驻表格的行 Form 会随之销毁、输入丢失。
+
+版本变更见 [CHANGELOG.md](./CHANGELOG.md)。
 
 ## License
 

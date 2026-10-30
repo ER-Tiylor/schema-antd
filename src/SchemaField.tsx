@@ -21,7 +21,7 @@ import type {
 export interface SchemaFieldProps<TValue = unknown> {
   schema: AnyFieldSchema<TValue>;
   value?: TValue;
-  /** 统一为 (value, ...meta)；Select/AppSelect 的 meta[0] 即选中项 */
+  /** 统一为 (value, ...meta)；Select/BizSelect 的 meta[0] 即选中项 */
   onChange?: (value: TValue, ...meta: unknown[]) => void;
   /** 高于 schema.mode */
   mode?: FieldMode;

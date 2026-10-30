@@ -14,7 +14,7 @@
 | 运行时 | `form/FormRuntimeHost.tsx` | 每个 FormInstance 一个作用域，派发 `events` 与 `linkage` |
 | 字段绑定 | `form/SchemaFormField.tsx` | 唯一可复用的具名 Form.Item 绑定层 |
 | 表单 | `SchemaForm.tsx` | `Form` + 运行时作用域 + 栅格布局 |
-| 选择器 | `app-select/` | 标量值 + search/resolve 分离 + 同源去重与轻量缓存 |
+| 业务下拉 | `biz-select/` | 候选来源按能力组合（常量 / 全量 / 关键词）+ 编码回显 + 级联；同源去重与缓存；字段类型需使用方 `registerBizSelectField()` 注册 |
 | 行合并 | `rowMerge.ts` | Form 值合并回完整记录，两个表格共用 |
 | 单活动行表格 | `editable-table/` | 单 FormInstance + 判脏 + 切换确认 + 行级保存 |
 | 全编辑表格 | `full-editable-table/` | 逐行 FormInstance、结构增删、整表校验提交 |
@@ -34,6 +34,8 @@
 - `type: 'Custom'` 是局部字段插槽：`render` 直接写在字段 Schema 里，`SchemaField` 在查 Registry
   之前分支（`registerField('Custom')` 被拒绝）。受控通道固定 `value`/`onChange`，业务值只能来自
   `ctx.value` / `ctx.props`，不得依赖环境 `Form.useFormInstance()`（表格只读单元格会拿到活动行草稿）。
+- `FieldType` 末尾留了 `(string & {})` 开放位：`registerField` 接受任意字符串类型名，业务方注册
+  「编辑组件 + `renderRead`」不用改包；内置字面量仍保留补全。`'Custom'` 始终是保留字。
 - 隐藏字段保留注册与值，仅跳过校验；禁止通过卸载 `Form.Item` 改变校验语义。
 - 行操作收在组件里，默认开箱即用：新增（`showAddButton`）、行内插入/删除（`showInsertAction` /
   `showDeleteAction`，内置操作列）默认**开启**；新增按钮右侧另有 `renderFooterExtra` 插槽；条内顺序
@@ -63,8 +65,10 @@ v2 组件全部就绪，通过 `pnpm typecheck:schema`。运行时验证页长�
 - `/schemaDemo/form`：SchemaForm 的 A 显隐 / B 赋值 / C 禁用 / D 级联取值 / E 动态必填 / F 选项动态；
 - `/schemaDemo/table`：两种可编辑表格共用同一套列 Schema，验证上述场景在表格中的表现，
   含默认的工具条（新增 / 插槽 / 批量删除）、行内插入/删除、多选、两种工具条位置与图标开关、表体高度；
-- `/schemaDemo/app-select`：AppSelect 专项——静态源、远程搜索、级联参数、缺必需参数不解析、
-  回显状态对照（empty / resolved / missing / blocked / loading / error）、对象模式与解析缓存；
+- `/schemaDemo/biz-select`：BizSelect 专项——三种来源（静态 / 有限枚举 / 无限远程）、展示三模式、
+  级联参数与 `requiredParams` 门禁、对象值形态、schema 里一行配完的级联；
+- `/schemaDemo/biz-select-scenarios`：BizSelect 全场景对照——标量直用、schema 配置、对象值、`useCandidates`、
+  `invalidateSelectSource`、内联源，逐条对照 `docs/2026-10-29-biz-select-api-preview.md` 给过的写法；
 - `/schemaDemo/custom`：`type: 'Custom'` 专项——standalone 编辑/只读、`renderRead` 优先、
   dynamic.props 与校验、events 联动写值、表格非编辑行按行记录派生；
 - `/schemaDemo/compare`：新旧对照——业务取自 OMS 物流单的货物明细/货运单元，老侧是整份复制过来的
@@ -75,7 +79,7 @@ v2 组件全部就绪，通过 `pnpm typecheck:schema`。运行时验证页长�
   外加人手键入的「键入 → 绘制」采样与重渲染探针列，结果可复制成 markdown
   （方案见 `docs/2026-10-28-schema-perf-test-plan.md`，实测数据见同名前缀的 baseline 文档）。
 
-七个页面互相可导航，`/schemaDemo` 重定向到第一个。
+八个页面互相可导航，`/schemaDemo` 重定向到第一个。
 
 尚未验证：真实业务页落地、日期与多选协议的判脏实测。
 

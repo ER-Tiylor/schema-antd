@@ -34,9 +34,14 @@ export type FieldType =
   | 'Transfer'
   | 'TreeSelect'
   | 'Upload'
-  | 'AppSelect'
+  | 'BizSelect'
   // 局部自定义字段：不注册全局类型，直接在字段 Schema 里给 render
   | 'Custom'
+  /**
+   * 业务方自定义类型：`registerField('XxxSelect', …)` 注册后即可直接写。
+   * 交叉一个空对象是为了保住内置字面量的补全，同时接受任意字符串。
+   */
+  | (string & {})
   // 允许业务通过 registerField 注册自定义类型，同时保留字面量提示
   | (string & {});
 
@@ -99,7 +104,7 @@ export interface WriteContext extends ReadContext {
 }
 
 export interface FieldEventContext extends WriteContext {
-  /** Select / AppSelect 的选中项，来自 SchemaField onChange 的第二参数 */
+  /** Select / BizSelect 的选中项，来自 SchemaField onChange 的第二参数 */
   option?: unknown;
   /** 其余元数据 */
   meta?: unknown[];

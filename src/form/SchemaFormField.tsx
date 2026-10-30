@@ -14,7 +14,7 @@ import { SchemaField } from '../SchemaField';
 import type { AnyFormFieldSchema, FieldMode, FormFieldSchema, ReadContext } from '../types';
 import type { FormRuntimeHost } from './FormRuntimeHost';
 import { useFormRuntimeHost } from './FormRuntimeHost';
-import { deriveFieldState, withDerivedProps } from './derive';
+import { deriveFieldState, normalizeFieldSchema, withDerivedProps } from './derive';
 import type { DerivedFieldState } from './derive';
 import { dedupeNamePaths, getNestedValue, namePathKey } from './namePath';
 
@@ -46,13 +46,18 @@ function warnMissingDependencies(schema: AnyFormFieldSchema) {
 }
 
 function SchemaFormFieldInner(props: SchemaFormFieldProps) {
-  const { schema } = props;
+  // 归一化必须早于 dynamic 判断：类型专有属性可能就地编译出 dependencies
+  const schema = normalizeFieldSchema(props.schema);
   const dependencies = schema.dynamic?.dependencies;
   if (IS_DEV && schema.dynamic && !dependencies) warnMissingDependencies(schema);
   const reactive = Boolean(
     dependencies?.length || schema.linkage?.some((rule) => rule.immediate),
   );
-  return reactive ? <ReactiveField {...props} /> : <FieldBody {...props} />;
+  return reactive ? (
+    <ReactiveField {...props} schema={schema} />
+  ) : (
+    <FieldBody {...props} schema={schema} />
+  );
 }
 
 export const SchemaFormField = memo(SchemaFormFieldInner);
